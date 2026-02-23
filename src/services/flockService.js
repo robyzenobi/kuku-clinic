@@ -1,32 +1,51 @@
-import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
+
+// Helper to get current user ID
+const getCurrentUserId = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.user?.id;
+};
 
 export const addFlock = async (flockData) => {
     try {
-        const docRef = await addDoc(collection(db, 'flocks'), {
-            ...flockData,
-            created_at: serverTimestamp(),
-            status: 'active'
-        });
-        console.log("Flock created with ID: ", docRef.id);
-        return { success: true, id: docRef.id };
+        const userId = await getCurrentUserId();
+        if (!userId) throw new Error("User not authenticated");
+
+        const { data, error } = await supabase
+            .from('flocks')
+            .insert([{
+                ...flockData,
+                user_id: userId,
+                status: 'active'
+            }])
+            .select();
+
+        if (error) throw error;
+
+        console.log("Flock created with ID:", data[0].id);
+        return { success: true, id: data[0].id };
     } catch (error) {
-        console.error("Error adding flock: ", error);
-        return { success: false, error };
+        console.error("Error adding flock:", error);
+        return { success: false, error: error.message };
     }
 };
 
 export const getFlocks = async () => {
     try {
-        const q = query(collection(db, 'flocks'), orderBy('created_at', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const flocks = [];
-        querySnapshot.forEach((doc) => {
-            flocks.push({ id: doc.id, ...doc.data() });
-        });
-        return flocks;
+        const userId = await getCurrentUserId();
+        if (!userId) return [];
+
+        const { data: flocks, error } = await supabase
+            .from('flocks')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return flocks || [];
     } catch (error) {
-        console.error("Error getting flocks: ", error);
+        console.error("Error getting flocks:", error);
         return [];
     }
 };
+

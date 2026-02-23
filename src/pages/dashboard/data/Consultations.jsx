@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../../lib/firebase';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { getConsultations } from '../../../services/consultationService';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 
 export const Consultations = () => {
@@ -10,13 +9,8 @@ export const Consultations = () => {
     const fetchConsultations = async () => {
         setLoading(true);
         try {
-            const q = query(collection(db, 'consultations'), orderBy('timestamp', 'desc'));
-            const querySnapshot = await getDocs(q);
-            const data = [];
-            querySnapshot.forEach((doc) => {
-                data.push({ id: doc.id, ...doc.data() });
-            });
-            setConsultations(data);
+            const data = await getConsultations();
+            setConsultations(data || []);
         } catch (error) {
             console.error("Error fetching consultations:", error);
         } finally {
@@ -28,9 +22,10 @@ export const Consultations = () => {
         fetchConsultations();
     }, []);
 
-    const formatDate = (timestamp) => {
-        if (!timestamp) return 'N/A';
-        return new Date(timestamp.seconds * 1000).toLocaleString();
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleString();
     };
 
     return (
@@ -72,8 +67,8 @@ export const Consultations = () => {
                                     </td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${item.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
-                                                item.status === 'completed' ? 'bg-green-50 text-green-700 border-green-100' :
-                                                    'bg-gray-50 text-gray-600 border-gray-100'
+                                            item.status === 'completed' ? 'bg-green-50 text-green-700 border-green-100' :
+                                                'bg-gray-50 text-gray-600 border-gray-100'
                                             }`}>
                                             {item.status || 'Pending'}
                                         </span>

@@ -1,39 +1,41 @@
-import { db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 
 export const getDashboardStats = async () => {
     try {
-        // 1. Fetch Flocks (Kuku)
-        const flocksSnapshot = await getDocs(collection(db, 'flocks'));
-        // Calculate total birds across all flocks
+        // 1. Fetch Flocks (Kuku) - Ideally we would sum bird_count via RPC if heavily scaled
+        // For now, doing a standard select
+        const { data: flocks, error: flocksError } = await supabase
+            .from('flocks')
+            .select('bird_count');
+
+        if (flocksError) throw flocksError;
+
         let totalKuku = 0;
-        flocksSnapshot.forEach(doc => {
-            totalKuku += (doc.data().bird_count || 0);
-        });
+        if (flocks) {
+            totalKuku = flocks.reduce((sum, flock) => sum + (flock.bird_count || 0), 0);
+        }
 
-        // 2. Fetch Products (Mauzo/Sales - simplify to just product count for now or sales records if exist)
-        // For now let's assume 'products' count represents inventory items or similar. 
-        // If 'Mauzo' implies specific sales transactions, we might query 'sales' collection later.
-        // Let's count items in 'products' for now as a proxy or 0 if empty.
-        const productsSnapshot = await getDocs(collection(db, 'products'));
-        const totalProducts = productsSnapshot.size;
+        // 2. Fetch Products Count
+        const { count: totalProducts, error: productsError } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true });
 
-        // 3. Fetch Consultations (Miadi)
-        const consultationsSnapshot = await getDocs(collection(db, 'consultations'));
-        const totalMiadi = consultationsSnapshot.size;
+        if (productsError) throw productsError;
+
+        // 3. Fetch Consultations Count
+        const { count: totalMiadi, error: consultationsError } = await supabase
+            .from('consultations')
+            .select('*', { count: 'exact', head: true });
+
+        if (consultationsError) throw consultationsError;
 
         return {
             kuku: totalKuku,
-            mauzo: totalProducts,
-            miadi: totalMiadi
+            mauzo: totalProducts || 0,
+            miadi: totalMiadi || 0
         };
     } catch (error) {
         console.error("Error fetching dashboard stats:", error);
-        // Return zeros on error to prevent crash
-        return {
-            kuku: 0,
-            mauzo: 0,
-            miadi: 0
-        };
+        return { kuku: 0, mauzo: 0, miadi: 0 };
     }
 };

@@ -1,9 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
 import UnifiedShell from './layouts/UnifiedShell';
 import ClientLayout from './layouts/ClientLayout';
 import DashboardLayout from './layouts/DashboardLayout';
+
+// Auth Pages
+import Login from './pages/auth/Login';
 
 // Client Pages
 import Home from './pages/client/Home';
@@ -23,7 +28,15 @@ function App() {
         <AppProvider>
             <Router>
                 <Routes>
-                    <Route path="/" element={<UnifiedShell />}>
+                    {/* Public Routes */}
+                    <Route path="/login" element={<Login />} />
+
+                    {/* Protected Unified Shell */}
+                    <Route path="/" element={
+                        <ProtectedRoute>
+                            <UnifiedShell />
+                        </ProtectedRoute>
+                    }>
                         <Route index element={<Navigate to="/app/home" replace />} />
 
                         {/* Client Routes */}

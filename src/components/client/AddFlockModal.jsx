@@ -16,19 +16,22 @@ const AddFlockModal = ({ isOpen, onClose, onSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const count = Number(formData.bird_count);
         const result = await addFlock({
-            ...formData,
-            bird_count: Number(formData.bird_count),
+            name: formData.name,
+            type: formData.type,
+            initial_count: count,
+            current_count: count,
             age_weeks: Number(formData.age_weeks)
         });
         setLoading(false);
         if (result.success) {
-            alert("Flock added successfully!");
+            alert("Kundi limerekodiwa kikamilifu!");
             setFormData({ name: '', type: 'Layers', bird_count: '', age_weeks: '' });
             onSuccess();
             onClose();
         } else {
-            alert("Failed to add flock.");
+            alert(`Imeshindwa: ${result.error || 'Jaribu tena baadaye.'}`);
         }
     };
 

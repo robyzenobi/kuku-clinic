@@ -1,0 +1,9 @@
+Checking Supabase tables...
+✅ Table [profiles]: EXISTS (RLS active, returned 0 rows)
+✅ Table [flocks]: EXISTS (RLS active, returned 0 rows)
+✅ Table [consultations]: EXISTS (RLS active, returned 0 rows)
+✅ Table [health_logs]: EXISTS (RLS active, returned 0 rows)
+✅ Table [feed_logs]: EXISTS (RLS active, returned 0 rows)
+✅ Table [production_logs]: EXISTS (RLS active, returned 0 rows)
+✅ Table [finance_logs]: EXISTS (RLS active, returned 0 rows)
+✅ Table [vets]: EXISTS (RLS active, returned 0 rows)
